@@ -39,6 +39,9 @@
                                 <td>
                                     <input type="checkbox" name="file_ids[]" value="{{ $file->id }}">
                                 </td>
+                                <td>
+                                    <a href="{{ url('google/drive/update', ['driveId' => $file->id]) }}">Update</a>
+                                </td>                                                                                 
                             </tr>
                         @endforeach
                     </tbody>

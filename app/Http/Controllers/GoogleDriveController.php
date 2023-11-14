@@ -170,146 +170,78 @@ class GoogleDriveController extends Controller
     }
     
     public function uploadFile(Request $request)
-{
-    $this->validate($request, [
-        'file' => 'required|mimes:jpg,png,pdf|max:2048',
-    ]);
-
-    $service = new \Google_Service_Drive($this->gClient);
-
-    $user = User::find(1);
-
-    $this->gClient->setAccessToken(json_decode($user->access_token, true));
-
-    // Check if the access token is expired
-    if ($this->gClient->isAccessTokenExpired()) {
-        $refreshTokenSaved = $this->gClient->getRefreshToken();
-        $this->gClient->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
-        $updatedAccessToken = $this->gClient->getAccessToken();
-        $updatedAccessToken['refresh_token'] = $refreshTokenSaved;
-        $this->gClient->setAccessToken($updatedAccessToken);
-
-        $user->access_token = json_encode($updatedAccessToken);
-        $user->save();
+    {
+        $this->validate($request, [
+            'file' => 'required|mimes:jpg,png,pdf|max:2048',
+        ]);
+    
+        $service = new \Google_Service_Drive($this->gClient);
+    
+        $user = User::find(1);
+    
+        $this->gClient->setAccessToken(json_decode($user->access_token, true));
+    
+        // Check if the access token is expired
+        if ($this->gClient->isAccessTokenExpired()) {
+            $refreshTokenSaved = $this->gClient->getRefreshToken();
+            $this->gClient->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
+            $updatedAccessToken = $this->gClient->getAccessToken();
+            $updatedAccessToken['refresh_token'] = $refreshTokenSaved;
+            $this->gClient->setAccessToken($updatedAccessToken);
+    
+            $user->access_token = json_encode($updatedAccessToken);
+            $user->save();
+        }
+    
+        // Get the ID of the existing "Project" folder
+        $folderId = $this->getGoogleDriveFolderId('Project');
+    
+        if (!$folderId) {
+            return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
+        }
+    
+        $fileContent = File::get($request->file('file')->getRealPath());
+    
+        // Create the file in the "Project" folder
+        $fileMetadata = new \Google_Service_Drive_DriveFile([
+            'name' => $request->file('file')->getClientOriginalName(),
+        ]);
+    
+        // Set the description
+        $description = $request->input('description');
+    
+        if ($description) {
+            $fileMetadata->setDescription($description);
+        }
+    
+        // Add the file to the specified folder using setParents
+        $fileMetadata->setParents([$folderId]);
+    
+        $file = $service->files->create($fileMetadata, [
+            'data' => $fileContent,
+            'mimeType' => $request->file('file')->getClientMimeType(),
+            'uploadType' => 'media',
+        ]);
+    
+        // ID Google Drive
+        $googleDriveId = $file->id;
+    
+        // Periksa apakah ID Google Drive berhasil didapatkan
+        if (!$googleDriveId) {
+            return view('google_drive_upload')->with('error', 'Failed to get Google Drive file ID.');
+        }
+    
+        // Simpan ke dalam database
+        \App\Models\File::create([
+            'name' => $file->name,
+            'description' => $description,
+            'google_drive_id' => $googleDriveId,
+        ]);
+    
+        // Get the URL of the uploaded file
+        $url = 'https://drive.google.com/open?id=' . $file->id;
+        return redirect()->route('google.drive.list');
     }
-
-    // Get the ID of the existing "Project" folder
-    $folderId = $this->getGoogleDriveFolderId('Project');
-
-    if (!$folderId) {
-        return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
-    }
-
-    $fileContent = File::get($request->file('file')->getRealPath());
-
-    // Create the file in the "Project" folder
-    $fileMetadata = new \Google_Service_Drive_DriveFile([
-        'name' => $request->file('file')->getClientOriginalName(),
-        'parents' => [$folderId],
-    ]);
-
-    // Set the description
-    $description = $request->input('description');
-
-    if ($description) {
-        $fileMetadata->setDescription($description);
-    }
-
-    $file = $service->files->create($fileMetadata, [
-        'data' => $fileContent,
-        'mimeType' => $request->file('file')->getClientMimeType(),
-        'uploadType' => 'media',
-    ]);
-
-    
-
-    // ID Google Drive
-    $googleDriveId = $file->id;
-
-    // Periksa apakah ID Google Drive berhasil didapatkan
-    if (!$googleDriveId) {
-        return view('google_drive_upload')->with('error', 'Failed to get Google Drive file ID.');
-    }
-
-    // Simpan ke dalam database
-    \App\Models\File::create([
-        'name' => $file->name,
-        'description' => $description,
-        'google_drive_id' => $googleDriveId,
-    ]);
-
-    // Get the URL of the uploaded file
-    $url = 'https://drive.google.com/open?id=' . $file->id;
-    return redirect()->route('google.drive.list');
-}
-
-
-    // public function uploadFile(Request $request)
-    // {
-    //     $this->validate($request, [
-    //         'file' => 'required|mimes:jpg,png,pdf|max:2048',
-    //     ]);
-    
-    //     $service = new \Google_Service_Drive($this->gClient);
-    
-    //     $user = User::find(1);
-    
-    //     $this->gClient->setAccessToken(json_decode($user->access_token, true));
-    
-    //     // Check if the access token is expired
-    //     if ($this->gClient->isAccessTokenExpired()) {
-    //         $refreshTokenSaved = $this->gClient->getRefreshToken();
-    //         $this->gClient->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
-    //         $updatedAccessToken = $this->gClient->getAccessToken();
-    //         $updatedAccessToken['refresh_token'] = $refreshTokenSaved;
-    //         $this->gClient->setAccessToken($updatedAccessToken);
-    
-    //         $user->access_token = json_encode($updatedAccessToken);
-    //         $user->save();
-    //     }
-    
-    //     // Get the ID of the existing "Project" folder
-    //     $folderId = $this->getGoogleDriveFolderId('Project');
-    
-    //     if (!$folderId) {
-    //         return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
-    //     }
-    
-    //     $fileContent = File::get($request->file('file')->getRealPath());
-    
-    //     // Create the file in the "Project" folder
-    //     $fileMetadata = new \Google_Service_Drive_DriveFile([
-    //         'name' => $request->file('file')->getClientOriginalName(),
-    //         'parents' => [$folderId],
-    //     ]);
-    
-    //     // Set the description
-    //     $description = $request->input('description');
-    
-    //     if ($description) {
-    //         $fileMetadata->setDescription($description);
-    //     }
-    
-    //     $file = $service->files->create($fileMetadata, [
-    //         'data' => $fileContent,
-    //         'mimeType' => $request->file('file')->getClientMimeType(),
-    //         'uploadType' => 'media',
-    //     ]);
-
-    //     // ID Google Drive
-    //     $googleDriveId = $file->id;    
-    
-    //     // Simpan ke dalam database
-    //     \App\Models\File::create([
-    //         'name' => $file->name,
-    //         'description' => $description,
-    //         'google_drive_id' => $googleDriveId,
-    //     ]);
-    
-    //     // Get the URL of the uploaded file
-    //     $url = 'https://drive.google.com/open?id=' . $file->id;
-    //     return redirect()->route('google.drive.list');
-    // }
     
 
     // Add a new method to delete selected files
@@ -349,4 +281,92 @@ class GoogleDriveController extends Controller
         return redirect()->route('google.drive.list')->with('success', 'Selected files have been deleted.');
     }
 
+    public function showUpdateForm($driveId)
+    {
+        $file = \App\Models\File::where('google_drive_id', $driveId)->first();
+
+        if (!$file) {
+            return redirect()->route('google.drive.list')->with('error', 'File not found.');
+        }
+
+        return view('update_file')->with('file', $file);
+    }
+
+    public function updateFile(Request $request, $driveId)
+    {
+        $this->validate($request, [
+            'description' => 'required|string|max:255',
+            'file' => 'nullable|mimes:jpg,png,pdf|max:2048',
+        ]);
+    
+        $file = \App\Models\File::where('google_drive_id', $driveId)->first();
+    
+        if (!$file) {
+            return redirect()->route('google.drive.list')->with('error', 'File not found.');
+        }
+    
+        // Update description
+        $file->description = $request->input('description');
+    
+        // Check if a new file is provided
+        if ($request->hasFile('file')) {
+            $service = new \Google_Service_Drive($this->gClient);
+    
+            $user = User::find(1);
+            $this->gClient->setAccessToken(json_decode($user->access_token, true));
+    
+            // Check if the access token is expired
+            if ($this->gClient->isAccessTokenExpired()) {
+                $refreshTokenSaved = $this->gClient->getRefreshToken();
+                $this->gClient->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
+                $updatedAccessToken = $this->gClient->getAccessToken();
+                $updatedAccessToken['refresh_token'] = $refreshTokenSaved;
+                $this->gClient->setAccessToken($updatedAccessToken);
+    
+                $user->access_token = json_encode($updatedAccessToken);
+                $user->save();
+            }
+    
+            // Get the ID of the existing "Project" folder
+            $folderId = $this->getGoogleDriveFolderId('Project');
+    
+            if (!$folderId) {
+                return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
+            }
+    
+            $fileContent = File::get($request->file('file')->getRealPath());
+    
+            // Create the file in the "Project" folder
+            $fileMetadata = new \Google_Service_Drive_DriveFile([
+                'name' => $request->file('file')->getClientOriginalName(),
+            ]);
+    
+            // Set the new description
+            $fileMetadata->setDescription($request->input('description'));
+    
+            // Set parents as an array or an empty array if it's null
+            $parents = is_array($file->parents) ? $file->parents : [];
+    
+            $updatedFile = $service->files->update(
+                $file->google_drive_id,
+                $fileMetadata,
+                [
+                    'data' => $fileContent,
+                    'mimeType' => $request->file('file')->getClientMimeType(),
+                    'uploadType' => 'media',
+                    'addParents' => $folderId,
+                    'removeParents' => implode(',', $parents),
+                ]
+            );
+    
+            // Update the Google Drive ID and parents in the local database
+            $file->google_drive_id = $updatedFile->id;
+            $file->parents = [$folderId];
+        }
+    
+        $file->save();
+    
+        return redirect()->route('google.drive.list')->with('success', 'File updated successfully.');
+    }
+    
 }

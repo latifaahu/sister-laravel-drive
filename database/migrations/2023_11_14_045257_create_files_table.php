@@ -18,6 +18,7 @@ class CreateFilesTable extends Migration
             $table->string('google_drive_id')->nullable();
             $table->string('name');
             $table->text('description');
+            $table->json('parents')->nullable();
             $table->timestamps();
         });
 

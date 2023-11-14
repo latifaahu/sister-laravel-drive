@@ -25,3 +25,9 @@ Route::post('/google/drive/upload', [GoogleDriveController::class, 'uploadFile']
 // Add a route for the listFiles method
 Route::get('/google/drive/list', [GoogleDriveController::class, 'listFiles'])->name('google.drive.list');
 Route::delete('/google/drive/delete', [GoogleDriveController::class, 'deleteFiles'])->name('google.drive.delete');
+// routes/web.php
+Route::get('/google/drive/update/{driveId}', [GoogleDriveController::class, 'showUpdateForm'])
+    ->name('google.drive.update.form');
+
+Route::put('/google/drive/update/{driveId}', [GoogleDriveController::class, 'updateFile'])
+    ->name('google.drive.update');

@@ -9,9 +9,7 @@ class File extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'description',
-        'google_drive_id',
-    ];
+    // In the File model
+    protected $fillable = ['name', 'description', 'google_drive_id', 'parents'];
+
 }
