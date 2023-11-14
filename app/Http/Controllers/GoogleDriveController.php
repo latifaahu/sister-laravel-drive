@@ -14,11 +14,11 @@ class GoogleDriveController extends Controller
         
         $this->gClient = new \Google_Client();
         
-        $this->gClient->setApplicationName('Project Web'); // ADD YOUR AUTH2 APPLICATION NAME (WHEN YOUR GENERATE SECRATE KEY)
-        $this->gClient->setClientId('600439554432-3err0q4upef32n0dphjtfllk86i891gr.apps.googleusercontent.com');
-        $this->gClient->setClientSecret('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');
+        $this->gClient->setApplicationName('Web Client 1'); // ADD YOUR AUTH2 APPLICATION NAME (WHEN YOUR GENERATE SECRATE KEY)
+        $this->gClient->setClientId('336533562342-vgfgvqvvre9d1q4o27npj7lcig9s8rjk.apps.googleusercontent.com');
+        $this->gClient->setClientSecret('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');
         $this->gClient->setRedirectUri(route('google.login'));
-        $this->gClient->setDeveloperKey('AIzaSyDgVvJRpgcaiPlJmYTbiyQG_CWDuYhbUoY');
+        $this->gClient->setDeveloperKey('AIzaSyAaryYwejqLC0ZYX4_h2iW4TqwYxUWfJHc');
         $this->gClient->setScopes(array(               
             'https://www.googleapis.com/auth/drive.file',
             'https://www.googleapis.com/auth/drive'
@@ -95,7 +95,7 @@ class GoogleDriveController extends Controller
         }
         
         $fileMetadata = new \Google_Service_Drive_DriveFile(array(
-            'name' => 'Project',             // ADD YOUR GOOGLE DRIVE FOLDER NAME
+            'name' => 'project-semester7-sister',             // ADD YOUR GOOGLE DRIVE FOLDER NAME
             'mimeType' => 'application/vnd.google-apps.folder'));
 
         $folder = $service->files->create($fileMetadata, array('fields' => 'id'));
@@ -154,14 +154,14 @@ class GoogleDriveController extends Controller
             $user->save();
         }
     
-        $folderId = $this->getGoogleDriveFolderId('Project');
+        $folderId = $this->getGoogleDriveFolderId('project-semester7-sister');
     
         if (!$folderId) {
-            // Handle the case when the "Project" folder does not exist
-            return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
+            // Handle the case when the "project-semester7-sister" folder does not exist
+            return view('google_drive_upload')->with('error', 'The "project-semester7-sister" folder does not exist.');
         }
     
-        // Retrieve the list of files in the "Project" folder
+        // Retrieve the list of files in the "project-semester7-sister" folder
         $parameters['q'] = "'$folderId' in parents";
         $parameters['fields'] = 'files(id, name, description)';
         $files = $service->files->listFiles($parameters);
@@ -193,16 +193,16 @@ class GoogleDriveController extends Controller
             $user->save();
         }
     
-        // Get the ID of the existing "Project" folder
-        $folderId = $this->getGoogleDriveFolderId('Project');
+        // Get the ID of the existing "project-semester7-sister" folder
+        $folderId = $this->getGoogleDriveFolderId('project-semester7-sister');
     
         if (!$folderId) {
-            return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
+            return view('google_drive_upload')->with('error', 'The "project-semester7-sister" folder does not exist.');
         }
     
         $fileContent = File::get($request->file('file')->getRealPath());
     
-        // Create the file in the "Project" folder
+        // Create the file in the "project-semester7-sister" folder
         $fileMetadata = new \Google_Service_Drive_DriveFile([
             'name' => $request->file('file')->getClientOriginalName(),
         ]);
@@ -278,7 +278,7 @@ class GoogleDriveController extends Controller
             \App\Models\File::where('google_drive_id', $fileId)->delete();
         }
 
-        return redirect()->route('google.drive.list')->with('success', 'Selected files have been deleted.');
+        return redirect()->route('google.drive.list')->with('success', 'Selected file have been deleted.');
     }
 
     public function showUpdateForm($driveId)
@@ -327,16 +327,16 @@ class GoogleDriveController extends Controller
                 $user->save();
             }
     
-            // Get the ID of the existing "Project" folder
-            $folderId = $this->getGoogleDriveFolderId('Project');
+            // Get the ID of the existing "project-semester7-sister" folder
+            $folderId = $this->getGoogleDriveFolderId('project-semester7-sister');
     
             if (!$folderId) {
-                return view('google_drive_upload')->with('error', 'The "Project" folder does not exist.');
+                return view('google_drive_upload')->with('error', 'The "project-semester7-sister" folder does not exist.');
             }
     
             $fileContent = File::get($request->file('file')->getRealPath());
     
-            // Create the file in the "Project" folder
+            // Create the file in the "project-semester7-sister" folder
             $fileMetadata = new \Google_Service_Drive_DriveFile([
                 'name' => $request->file('file')->getClientOriginalName(),
             ]);
