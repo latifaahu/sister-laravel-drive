@@ -13,7 +13,10 @@
     <form action="{{ route('google.drive.upload') }}" method="post" enctype="multipart/form-data">
         @csrf
         <label for="file">Choose File:</label>
-        <input type="file" name="file" id="file" accept=".jpg, .png, .pdf"> <!-- Sesuaikan dengan jenis file yang diizinkan -->
+        <input type="file" name="file" id="file" accept=".jpg, .png, .pdf">
+        
+        <label for="description">Description:</label>
+        <input type="text" name="description" id="description">
 
         <button type="submit">Upload</button>
     </form>
